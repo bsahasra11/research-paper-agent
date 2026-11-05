@@ -43,7 +43,7 @@ export default function App() {
     } catch (err: any) {
       console.warn('API route unavailable, using client fallback analysis:', err);
 
-      // Safe fallback data structure for custom PDFs
+      // Safe fallback data structure with array guarantees
       setCurrentAnalysis(paper.precomputedAnalysis || {
         problem: "The uploaded document addresses key structural and operational constraints, focusing on algorithmic optimization and system efficiency.",
         methodology: "Employs quantitative analysis, benchmarking against standard baselines, and structured evaluation protocols.",
@@ -69,12 +69,14 @@ export default function App() {
     try {
       const parsedPaper = await parsePdfFile(file);
       
-      // Ensure required fallback properties exist so components don't crash reading null
+      // Ensure authors is ALWAYS an array so .join() never crashes
       const safePaper: PaperDocument = {
         ...parsedPaper,
         id: parsedPaper.id || `custom-${Date.now()}`,
         title: parsedPaper.title || file.name.replace('.pdf', ''),
-        authors: parsedPaper.authors || ['Uploaded Document'],
+        authors: Array.isArray(parsedPaper.authors) && parsedPaper.authors.length > 0 
+          ? parsedPaper.authors 
+          : ['Uploaded Document'],
         year: parsedPaper.year || new Date().getFullYear(),
         abstract: parsedPaper.abstract || 'Custom user document uploaded for automated analysis.',
         url: parsedPaper.url || '',
@@ -108,12 +110,18 @@ export default function App() {
   // Switch active paper
   const handleSelectPaper = (paper: PaperDocument) => {
     if (!paper) return;
-    setCurrentPaper(paper);
-    if (paper.precomputedAnalysis) {
-      setCurrentAnalysis(paper.precomputedAnalysis);
+    
+    const safePaper: PaperDocument = {
+      ...paper,
+      authors: Array.isArray(paper.authors) ? paper.authors : ['Unknown Author']
+    };
+
+    setCurrentPaper(safePaper);
+    if (safePaper.precomputedAnalysis) {
+      setCurrentAnalysis(safePaper.precomputedAnalysis);
       setError(null);
     } else {
-      executeAnalysis(paper);
+      executeAnalysis(safePaper);
     }
   };
 
