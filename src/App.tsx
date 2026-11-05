@@ -5,15 +5,12 @@ import CotAnalysisPanel from './components/CotAnalysisPanel';
 import ExportModal from './components/ExportModal';
 import BenchmarkModal from './components/BenchmarkModal';
 import { PaperDocument, PaperAnalysisResult } from './types/paper';
-import { LANDMARK_PAPERS } from './data/landmarkPapers';
 import { parsePdfFile } from './utils/pdfParser';
 
 export default function App() {
-  // Default to seminal paper "Attention Is All You Need" for instant exploration
-  const [currentPaper, setCurrentPaper] = useState<PaperDocument | null>(LANDMARK_PAPERS[0]);
-  const [currentAnalysis, setCurrentAnalysis] = useState<PaperAnalysisResult | null>(
-    LANDMARK_PAPERS[0].precomputedAnalysis || null
-  );
+  // Started empty with no pre-loaded benchmark papers
+  const [currentPaper, setCurrentPaper] = useState<PaperDocument | null>(null);
+  const [currentAnalysis, setCurrentAnalysis] = useState<PaperAnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [isParsingPdf, setIsParsingPdf] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +22,7 @@ export default function App() {
   // Mobile pane switcher (tabs on mobile viewports)
   const [mobileActivePane, setMobileActivePane] = useState<'doc' | 'cot'>('cot');
 
-  // Trigger server-side Gemini Chain-of-Thought analysis with graceful Vercel fallback
+  // Trigger Gemini Chain-of-Thought analysis with Vercel fallback handling
   const executeAnalysis = useCallback(async (paper: PaperDocument) => {
     setIsAnalyzing(true);
     setError(null);
@@ -44,7 +41,7 @@ export default function App() {
       const result: PaperAnalysisResult = await response.json();
       setCurrentAnalysis(result);
     } catch (err: any) {
-      console.warn('API route unavailable, using static fallback analysis:', err);
+      console.warn('API route unavailable, using client fallback analysis:', err);
 
       // Graceful fallback for Vercel static deployments
       if (paper.precomputedAnalysis) {
@@ -115,4 +112,47 @@ export default function App() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'o') {
-        e.preventDefault
+        e.preventDefault();
+        triggerFileInput();
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+        if (currentAnalysis) {
+          setIsExportModalOpen(true);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentAnalysis]);
+
+  return (
+    <div className="flex flex-col h-screen w-screen bg-[#FBFBF9] text-stone-900 overflow-hidden font-sans-body">
+      {/* 3-Zone Editorial Top Bar */}
+      <Header
+        currentPaper={currentPaper}
+        onOpenUpload={triggerFileInput}
+        onOpenExport={() => setIsExportModalOpen(true)}
+        onOpenBenchmarkSelect={() => setIsBenchmarkModalOpen(true)}
+        hasAnalysis={Boolean(currentAnalysis)}
+      />
+
+      {/* Mobile Screen Segmented Switcher */}
+      <div className="flex lg:hidden items-center justify-center p-2 bg-stone-100 border-b border-stone-200">
+        <div className="flex items-center gap-1 p-1 bg-stone-200/80 rounded-lg text-xs w-full max-w-xs">
+          <button
+            onClick={() => setMobileActivePane('doc')}
+            className={`flex-1 py-1.5 rounded-md font-medium text-center transition-colors ${
+              mobileActivePane === 'doc'
+                ? 'bg-white text-stone-900 shadow-xs'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            Document Viewer
+          </button>
+          <button
+            onClick={() => setMobileActivePane('cot')}
+            className={`flex-1 py-1.5 rounded-md font-medium text-center transition-colors ${
+              mobileActivePane === 'cot'
+                ? 'bg-white text-stone-900 shadow-xs'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
