@@ -141,18 +141,4 @@ export default function App() {
         <div className="flex items-center gap-1 p-1 bg-stone-200/80 rounded-lg text-xs w-full max-w-xs">
           <button
             onClick={() => setMobileActivePane('doc')}
-            className={`flex-1 py-1.5 rounded-md font-medium text-center transition-colors ${
-              mobileActivePane === 'doc'
-                ? 'bg-white text-stone-900 shadow-xs'
-                : 'text-stone-600 hover:text-stone-900'
-            }`}
-          >
-            Document Viewer
-          </button>
-          <button
-            onClick={() => setMobileActivePane('cot')}
-            className={`flex-1 py-1.5 rounded-md font-medium text-center transition-colors ${
-              mobileActivePane === 'cot'
-                ? 'bg-white text-stone-900 shadow-xs'
-                : 'text-stone-600 hover:text-stone-900'
-            }`}
+            className={`flex-1 py
