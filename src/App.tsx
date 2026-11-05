@@ -23,6 +23,7 @@ export default function App() {
 
   // Trigger Gemini Chain-of-Thought analysis with Vercel fallback handling
   const executeAnalysis = useCallback(async (paper: PaperDocument) => {
+    if (!paper) return;
     setIsAnalyzing(true);
     setError(null);
 
@@ -30,7 +31,7 @@ export default function App() {
       const response = await fetch('/api/analyze-paper', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: paper.rawText || paper.title })
+        body: JSON.stringify({ text: paper.rawText || paper.title || "Uploaded Document" })
       });
 
       if (!response.ok) {
@@ -42,18 +43,14 @@ export default function App() {
     } catch (err: any) {
       console.warn('API route unavailable, using client fallback analysis:', err);
 
-      // Graceful fallback for Vercel static deployments
-      if (paper.precomputedAnalysis) {
-        setCurrentAnalysis(paper.precomputedAnalysis);
-      } else {
-        setCurrentAnalysis({
-          problem: "The uploaded document addresses key structural and operational constraints, focusing on algorithmic optimization and system efficiency.",
-          methodology: "Employs quantitative analysis, benchmarking against standard baselines, and structured evaluation protocols.",
-          findings: "Demonstrates measurable performance improvements across key test scenarios.",
-          limitations: "Requires further empirical validation across broader datasets and edge-case operational environments.",
-          executive: "A solid technical formulation offering actionable baseline improvements."
-        });
-      }
+      // Safe fallback data structure for custom PDFs
+      setCurrentAnalysis(paper.precomputedAnalysis || {
+        problem: "The uploaded document addresses key structural and operational constraints, focusing on algorithmic optimization and system efficiency.",
+        methodology: "Employs quantitative analysis, benchmarking against standard baselines, and structured evaluation protocols.",
+        findings: "Demonstrates measurable performance improvements across key test scenarios.",
+        limitations: "Requires further empirical validation across broader datasets and edge-case operational environments.",
+        executive: "A solid technical formulation offering actionable baseline improvements."
+      });
     } finally {
       setIsAnalyzing(false);
     }
@@ -61,7 +58,7 @@ export default function App() {
 
   // Handle uploaded PDF file
   const handleFileUpload = async (file: File) => {
-    if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
+    if (!file || (file.type !== 'application/pdf' && !file.name.endsWith('.pdf'))) {
       setError('Please upload a valid PDF document (.pdf file format).');
       return;
     }
@@ -71,10 +68,23 @@ export default function App() {
 
     try {
       const parsedPaper = await parsePdfFile(file);
-      setCurrentPaper(parsedPaper);
+      
+      // Ensure required fallback properties exist so components don't crash reading null
+      const safePaper: PaperDocument = {
+        ...parsedPaper,
+        id: parsedPaper.id || `custom-${Date.now()}`,
+        title: parsedPaper.title || file.name.replace('.pdf', ''),
+        authors: parsedPaper.authors || ['Uploaded Document'],
+        year: parsedPaper.year || new Date().getFullYear(),
+        abstract: parsedPaper.abstract || 'Custom user document uploaded for automated analysis.',
+        url: parsedPaper.url || '',
+        rawText: parsedPaper.rawText || ''
+      };
+
+      setCurrentPaper(safePaper);
       setCurrentAnalysis(null);
 
-      await executeAnalysis(parsedPaper);
+      await executeAnalysis(safePaper);
       setMobileActivePane('cot');
     } catch (err: any) {
       console.error('PDF parsing error:', err);
@@ -97,6 +107,7 @@ export default function App() {
 
   // Switch active paper
   const handleSelectPaper = (paper: PaperDocument) => {
+    if (!paper) return;
     setCurrentPaper(paper);
     if (paper.precomputedAnalysis) {
       setCurrentAnalysis(paper.precomputedAnalysis);
@@ -134,7 +145,7 @@ export default function App() {
         hasAnalysis={Boolean(currentAnalysis)}
       />
 
-      {/* Mobile Screen Segmented Switcher */}
+      {/* Mobile Switcher */}
       <div className="flex lg:hidden items-center justify-center p-2 bg-stone-100 border-b border-stone-200">
         <div className="flex items-center gap-1 p-1 bg-stone-200/80 rounded-lg text-xs w-full max-w-xs">
           <button
@@ -160,7 +171,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* Main Dual-Pane Workspace */}
+      {/* Main Workspace */}
       <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden h-[calc(100vh-57px)]">
         {/* Left Pane */}
         <section
