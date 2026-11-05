@@ -8,7 +8,6 @@ import { PaperDocument, PaperAnalysisResult } from './types/paper';
 import { parsePdfFile } from './utils/pdfParser';
 
 export default function App() {
-  // Started empty with no pre-loaded benchmark papers
   const [currentPaper, setCurrentPaper] = useState<PaperDocument | null>(null);
   const [currentAnalysis, setCurrentAnalysis] = useState<PaperAnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
@@ -19,7 +18,7 @@ export default function App() {
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
   const [isBenchmarkModalOpen, setIsBenchmarkModalOpen] = useState<boolean>(false);
 
-  // Mobile pane switcher (tabs on mobile viewports)
+  // Mobile pane switcher
   const [mobileActivePane, setMobileActivePane] = useState<'doc' | 'cot'>('cot');
 
   // Trigger Gemini Chain-of-Thought analysis with Vercel fallback handling
@@ -75,7 +74,6 @@ export default function App() {
       setCurrentPaper(parsedPaper);
       setCurrentAnalysis(null);
 
-      // Automatically initiate Chain-of-Thought reasoning
       await executeAnalysis(parsedPaper);
       setMobileActivePane('cot');
     } catch (err: any) {
@@ -127,7 +125,7 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen w-screen bg-[#FBFBF9] text-stone-900 overflow-hidden font-sans-body">
-      {/* 3-Zone Editorial Top Bar */}
+      {/* Header */}
       <Header
         currentPaper={currentPaper}
         onOpenUpload={triggerFileInput}
@@ -141,4 +139,74 @@ export default function App() {
         <div className="flex items-center gap-1 p-1 bg-stone-200/80 rounded-lg text-xs w-full max-w-xs">
           <button
             onClick={() => setMobileActivePane('doc')}
-            className={`flex-1 py
+            className={`flex-1 py-1.5 rounded-md font-medium text-center transition-colors ${
+              mobileActivePane === 'doc'
+                ? 'bg-white text-stone-900 shadow-xs'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            Document Viewer
+          </button>
+          <button
+            onClick={() => setMobileActivePane('cot')}
+            className={`flex-1 py-1.5 rounded-md font-medium text-center transition-colors ${
+              mobileActivePane === 'cot'
+                ? 'bg-white text-stone-900 shadow-xs'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            CoT Analysis {isAnalyzing && '●'}
+          </button>
+        </div>
+      </div>
+
+      {/* Main Dual-Pane Workspace */}
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden h-[calc(100vh-57px)]">
+        {/* Left Pane */}
+        <section
+          className={`lg:col-span-5 h-full overflow-hidden ${
+            mobileActivePane === 'doc' ? 'block' : 'hidden lg:block'
+          }`}
+        >
+          <PdfViewer
+            currentPaper={currentPaper}
+            onSelectPaper={handleSelectPaper}
+            onFileUpload={handleFileUpload}
+            isParsingPdf={isParsingPdf}
+          />
+        </section>
+
+        {/* Right Pane */}
+        <section
+          className={`lg:col-span-7 h-full overflow-hidden ${
+            mobileActivePane === 'cot' ? 'block' : 'hidden lg:block'
+          }`}
+        >
+          <CotAnalysisPanel
+            analysis={currentAnalysis}
+            isAnalyzing={isAnalyzing}
+            onTriggerAnalysis={() => currentPaper && executeAnalysis(currentPaper)}
+            onOpenExport={() => setIsExportModalOpen(true)}
+            error={error}
+          />
+        </section>
+      </main>
+
+      {/* Modals */}
+      {isExportModalOpen && currentAnalysis && (
+        <ExportModal
+          analysis={currentAnalysis}
+          onClose={() => setIsExportModalOpen(false)}
+        />
+      )}
+
+      {isBenchmarkModalOpen && (
+        <BenchmarkModal
+          currentPaperId={currentPaper?.id || null}
+          onSelectPaper={handleSelectPaper}
+          onClose={() => setIsBenchmarkModalOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
