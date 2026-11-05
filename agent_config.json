@@ -1,0 +1,13 @@
+{
+  "agent_name": "Research Paper Analysis Agent",
+  "version": "1.0.0",
+  "prompt_strategy": ["Chain-of-Thought", "Few-Shot"],
+  "system_instruction": "You are an expert Research Paper Assistant Agent. Analyze academic papers using structured step-by-step reasoning.",
+  "cot_steps": [
+    "Problem Definition",
+    "Proposed Methodology",
+    "Key Findings & Metrics",
+    "Limitations & Future Work",
+    "Executive Summary"
+  ]
+}

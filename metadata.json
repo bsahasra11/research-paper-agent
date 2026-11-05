@@ -1,0 +1,8 @@
+{
+  "name": "ScholarCoT: Research Paper Assistant Agent",
+  "description": "Expert academic research paper assistant agent analyzing technical preprints and papers using a rigorous 5-step Chain-of-Thought reasoning sequence with LaTeX formula support and structured export.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
