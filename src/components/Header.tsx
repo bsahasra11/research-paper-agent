@@ -1,5 +1,4 @@
 import React from 'react';
-import { FileUp, Download, Sparkles, BookOpen } from 'lucide-react';
 import { PaperDocument } from '../types/paper';
 
 interface HeaderProps {
@@ -10,82 +9,70 @@ interface HeaderProps {
   hasAnalysis: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({
+export default function Header({
   currentPaper,
   onOpenUpload,
   onOpenExport,
   onOpenBenchmarkSelect,
-  hasAnalysis,
-}) => {
+  hasAnalysis
+}: HeaderProps) {
+  // Safely join authors without crashing if undefined or string
+  const authorsText = Array.isArray(currentPaper?.authors)
+    ? currentPaper.authors.join(', ')
+    : currentPaper?.authors || 'Unknown Author';
+
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between gap-8 border-b border-stone-200 bg-[#FBFBF9]/95 px-6 py-3.5 backdrop-blur-sm">
-      {/* Zone 1: Single text element wordmark in editorial serif */}
-      <div className="flex items-center gap-3 shrink-0">
-        <a href="/" className="font-serif-scholarly text-xl font-bold tracking-tight text-stone-900 whitespace-nowrap shrink-0">
-          ScholarCoT
-        </a>
-        <span className="hidden sm:inline-block text-xs text-stone-400 font-mono-code">
-          v2.4
-        </span>
+    <header className="h-[57px] border-b border-stone-200 bg-white px-4 flex items-center justify-between z-10 shrink-0">
+      {/* Left: App Title */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-stone-900 text-white font-serif font-bold text-base">
+          Å
+        </div>
+        <div>
+          <h1 className="font-serif text-sm font-semibold text-stone-900 leading-tight">
+            Research Paper Agent
+          </h1>
+          <p className="text-[10px] text-stone-500 font-mono uppercase tracking-wider">
+            Gemini CoT Synthesis
+          </p>
+        </div>
       </div>
 
-      {/* Zone 2: Clean unboxed metadata with typographic separators */}
-      <div className="hidden md:flex items-center gap-2 text-xs text-stone-600 truncate max-w-2xl font-sans-body">
-        {currentPaper ? (
-          <>
-            <span className="font-medium text-stone-900 truncate max-w-xs" title={currentPaper.title}>
-              {currentPaper.title}
-            </span>
-            <span aria-hidden="true" className="text-stone-300">·</span>
-            <span className="truncate max-w-[180px] text-stone-500">
-              {currentPaper.authors?.[0] || 'Unknown Author'}
-              {currentPaper.authors && currentPaper.authors.length > 1 ? ` et al.` : ''}
-            </span>
-            <span aria-hidden="true" className="text-stone-300">·</span>
-            <span className="text-stone-500 font-mono-code tabular-nums">
-              {currentPaper.year || '2026'}
-            </span>
-            <span aria-hidden="true" className="text-stone-300">·</span>
-            <span className="text-stone-500 font-mono-code tabular-nums">
-              {currentPaper.pages?.length || 1} {currentPaper.pages?.length === 1 ? 'page' : 'pages'}
-            </span>
-          </>
-        ) : (
-          <span className="text-stone-400 italic">No document loaded · Select a landmark paper or upload a PDF</span>
-        )}
-      </div>
+      {/* Center: Current Document Meta */}
+      {currentPaper && (
+        <div className="hidden md:flex flex-col items-center max-w-md truncate">
+          <span className="text-xs font-medium text-stone-800 truncate max-w-xs">
+            {currentPaper.title || 'Untitled Document'}
+          </span>
+          <span className="text-[11px] text-stone-500 truncate max-w-xs">
+            {authorsText} {currentPaper.year ? `(${currentPaper.year})` : ''}
+          </span>
+        </div>
+      )}
 
-      {/* Zone 3: Primary Actions */}
-      <div className="flex items-center gap-3 shrink-0">
+      {/* Right: Actions */}
+      <div className="flex items-center gap-2">
         <button
           onClick={onOpenBenchmarkSelect}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone-700 bg-stone-100 hover:bg-stone-200 border border-stone-300 rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-          title="Select from pre-indexed seminal papers"
+          className="px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-100 rounded-md border border-stone-200 transition-colors"
         >
-          <BookOpen className="w-3.5 h-3.5 text-stone-600" />
-          <span>Benchmarks</span>
+          Benchmarks
         </button>
-
         <button
           onClick={onOpenUpload}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone-700 hover:text-stone-900 border border-stone-300 hover:border-stone-400 bg-white rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer shadow-xs"
+          className="px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-100 rounded-md border border-stone-200 transition-colors flex items-center gap-1.5"
         >
-          <FileUp className="w-3.5 h-3.5 text-stone-600" />
           <span>Upload PDF</span>
         </button>
-
         {hasAnalysis && (
           <button
             onClick={onOpenExport}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-blue-900 hover:bg-blue-800 rounded-md transition-colors whitespace-nowrap shrink-0 shadow-xs cursor-pointer"
+            className="px-3 py-1.5 text-xs font-medium text-white bg-stone-900 hover:bg-stone-800 rounded-md transition-colors"
           >
-            <Download className="w-3.5 h-3.5" />
-            <span>Export Report</span>
+            Export
           </button>
         )}
       </div>
     </header>
   );
-};
-
-export default Header;
+}
